@@ -7,9 +7,20 @@ interface UsernameDialogProps {
 
 const UsernameDialog: React.FC<UsernameDialogProps> = ({ open, onSubmit }) => {
   const [username, setUsername] = useState("");
+  const [error, setError] = useState(false);
 
   const handleSubmit = () => {
-    onSubmit(username);
+    if (username.trim() === "") {
+      setError(true);
+    } else {
+      setError(false);
+      onSubmit(username);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
+    setError(false);
   };
 
   return (
@@ -27,11 +38,18 @@ const UsernameDialog: React.FC<UsernameDialogProps> = ({ open, onSubmit }) => {
                   <input
                     type="text"
                     placeholder="Enter your username"
-                    className="flex-grow px-4 py-2 border border-blue-300 rounded focus:outline-none focus:border-blue-500 text-sm"
+                    className={`flex-grow px-4 py-2 border ${
+                      error ? "border-red-500" : "border-blue-300"
+                    } rounded focus:outline-none focus:border-blue-500 text-sm`}
                     value={username}
-                    onChange={e => setUsername(e.target.value)}
+                    onChange={handleInputChange}
                   />
                 </div>
+                {error && (
+                  <div className="text-red-500 text-xs mb-4">
+                    Username cannot be empty.
+                  </div>
+                )}
                 <div className="flex justify-end">
                   <button
                     onClick={handleSubmit}

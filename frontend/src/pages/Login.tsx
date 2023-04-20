@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import LottieAnimation from "lottie-react";
 import coinFlipAnimation from "@/assets/abis/coinFlipAnimation.json";
 import { ethers } from "ethers";
@@ -6,6 +7,7 @@ import { MetaMaskInpageProvider } from "@metamask/providers";
 import { CoinFlipGameABI, CoinFlipGameAddress } from "@/contract/CoinFlipGame";
 import { getSigner } from "@/utils/ConnectWallet";
 import UsernameDialog from "@/components/UsernameDialog";
+import { useUserStore } from "@/store/UserStore";
 
 declare global {
   interface Window {
@@ -14,25 +16,36 @@ declare global {
 }
 
 const Login: React.FC = () => {
-  const [showUsernameDialog, setShowUsernameDialog] = useState(false);
-  const [contract, setContract] = useState<ethers.Contract | null>(null);
-  const [address, setAddress] = useState<string>("");
-  const [username, setUsername] = useState<string>("");
+  const { address, loggedIn, setAddress, setUsername, setLoggedIn } =
+    useUserStore();
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  const navigate = useNavigate();
+
+  const [showUsernameDialog, setShowUsernameDialog] = React.useState(false);
 
   const handleUsernameSubmit = async (username: string) => {
-    // 在这里调用合约的 setUsername 函数
-    if (contract) {
-      try {
-        const transaction = await contract.setUsername(username);
-        await contract.provider.waitForTransaction(transaction.hash);
-        const newUsername = await contract.usernameByAddress(address);
-        console.log("Username in SubmitDialog:", newUsername);
-        setUsername(newUsername);
-      } catch (error) {
-        alert("Error setting username:" + error);
-      }
-    } else {
-      alert("Some Error in contract");
+    if (!address) {
+      alert("Address not found.");
+      return;
+    }
+
+    const signer = await getSigner();
+    const contract = new ethers.Contract(
+      CoinFlipGameAddress,
+      CoinFlipGameABI,
+      signer
+    );
+
+    try {
+      const transaction = await contract.setUsername(username);
+      await contract.provider.waitForTransaction(transaction.hash);
+      setUsername(username);
+      setLoggedIn(true);
+      navigate("/gameHall");
+    } catch (error) {
+      alert("Error setting username:" + error);
     }
     setShowUsernameDialog(false);
   };
@@ -40,24 +53,24 @@ const Login: React.FC = () => {
   const handleLogin = async () => {
     if (window.ethereum) {
       try {
-        if (!window.ethereum.selectedAddress) {
-          const signer = await getSigner();
-          const address = await signer.getAddress();
-          setAddress(address);
-          const contract = new ethers.Contract(
-            CoinFlipGameAddress,
-            CoinFlipGameABI,
-            signer
-          );
-          setContract(contract);
-          const newUsername = await contract.usernameByAddress(address);
+        const signer = await getSigner();
+        const address = await signer.getAddress();
+        setAddress(address);
+        const contract = new ethers.Contract(
+          CoinFlipGameAddress,
+          CoinFlipGameABI,
+          signer
+        );
+        const newUsername = await contract.usernameByAddress(address);
+        if (!newUsername) {
+          setShowUsernameDialog(true);
+        } else {
           setUsername(newUsername);
-          if (!newUsername) {
-            setShowUsernameDialog(true);
-          }
+          setLoggedIn(true);
+          navigate("/gameHall");
         }
       } catch (error) {
-        alert("Error connecting to MetaMask:" + error);
+        alert("Error connecting to MetaMask in Login:" + error);
       }
     } else {
       alert("MetaMask is not installed.");
@@ -68,6 +81,10 @@ const Login: React.FC = () => {
     if (window.ethereum && window.ethereum.selectedAddress) {
       (async function getInfo() {
         try {
+          if (loggedIn) {
+            navigate("/gameHall");
+          }
+          setIsLoading(false);
           const signer = await getSigner();
           const address = await signer.getAddress();
           setAddress(address);
@@ -76,49 +93,64 @@ const Login: React.FC = () => {
             CoinFlipGameABI,
             signer
           );
-          setContract(contract);
           const username = await contract.usernameByAddress(address);
-          setUsername(username);
           if (!username) {
             setShowUsernameDialog(true);
+          } else {
+            setUsername(username);
+            setLoggedIn(true);
+            navigate("/gameHall");
           }
         } catch (error) {
           alert("Error connecting to MetaMask:" + error);
         }
       })();
+    } else {
+      setIsLoading(false);
+      setAddress(null);
+      setUsername(null);
+      setLoggedIn(false);
     }
-  }, []);
+  }, [loggedIn, navigate, setAddress, setLoggedIn, setUsername]);
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center">
-      <div
-        className="bg-gradient-to-r from-blue-300 to-blue-600 absolute inset-0"
-        style={{
-          zIndex: -1,
-        }}
-      />
-      <LottieAnimation
-        animationData={coinFlipAnimation}
-        loop
-        style={{
-          position: "absolute",
-          width: "100%",
-          height: "100%",
-          paddingBottom: "200px",
-          zIndex: -1,
-        }}
-      />
-      <button
-        onClick={handleLogin}
-        className="bg-white hover:bg-opacity-60 text-blue-900 font-bold py-2 px-4 rounded shadow mt-60 transition duration-200 border border-blue-900 hover:border-opacity-60">
-        Log in with MetaMask
-      </button>
+    <>
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : (
+        <div className="relative min-h-screen flex items-center justify-center">
+          <div
+            className="bg-gradient-to-r from-blue-300 to-blue-600 absolute inset-0"
+            style={{
+              zIndex: -1,
+            }}
+          />
+          <LottieAnimation
+            animationData={coinFlipAnimation}
+            loop
+            style={{
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              paddingBottom: "200px",
+              zIndex: -1,
+            }}
+          />
+          <div className="flex flex-col items-center">
+            <button
+              onClick={handleLogin}
+              className="bg-white hover:bg-opacity-60 text-blue-900 font-bold py-2 px-4 rounded shadow mt-60 transition duration-200 border border-blue-900 hover:border-opacity-60">
+              Log in with with MetaMask
+            </button>
+          </div>
 
-      <UsernameDialog
-        open={showUsernameDialog}
-        onSubmit={handleUsernameSubmit}
-      />
-    </div>
+          <UsernameDialog
+            open={showUsernameDialog}
+            onSubmit={handleUsernameSubmit}
+          />
+        </div>
+      )}
+    </>
   );
 };
 
