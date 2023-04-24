@@ -1,16 +1,8 @@
 import React from "react";
-import { useUserStore } from "@/store/UserStore";
+import Navbar from "@/components/Navbar";
 
 const GameHall: React.FC = () => {
-  const { address, username, loggedIn } = useUserStore();
-
-  return (
-    <div>
-      <div>Address: {address}</div>
-      <div>Username: {username}</div>
-      <div>LoggedIn: {loggedIn.toString()}</div>
-    </div>
-  );
+  return <Navbar />;
 };
 
 export default GameHall;

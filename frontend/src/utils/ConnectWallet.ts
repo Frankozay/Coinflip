@@ -13,5 +13,5 @@ export const getSigner = async () => {
     window.ethereum as unknown as ethers.providers.ExternalProvider
   );
   const signer = provider.getSigner();
-  return signer;
+  return { provider, signer };
 };

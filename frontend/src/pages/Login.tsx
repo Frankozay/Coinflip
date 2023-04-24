@@ -31,7 +31,7 @@ const Login: React.FC = () => {
       return;
     }
 
-    const signer = await getSigner();
+    const { signer } = await getSigner();
     const contract = new ethers.Contract(
       CoinFlipGameAddress,
       CoinFlipGameABI,
@@ -53,7 +53,7 @@ const Login: React.FC = () => {
   const handleLogin = async () => {
     if (window.ethereum) {
       try {
-        const signer = await getSigner();
+        const { signer } = await getSigner();
         const address = await signer.getAddress();
         setAddress(address);
         const contract = new ethers.Contract(
@@ -85,7 +85,7 @@ const Login: React.FC = () => {
             navigate("/gameHall");
           }
           setIsLoading(false);
-          const signer = await getSigner();
+          const { signer } = await getSigner();
           const address = await signer.getAddress();
           setAddress(address);
           const contract = new ethers.Contract(
