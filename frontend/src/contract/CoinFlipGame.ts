@@ -322,4 +322,4 @@ export const CoinFlipGameABI = [
   },
 ];
 
-export const CoinFlipGameAddress = "0xF770cda97F05c968C5ceE40aEd6E72fC8B213Ca7"; // 将实际的合约部署地址替换为这个占位符
+export const CoinFlipGameAddress = "0xFC497af15Cf63EFbdFa61B3f182AfcAA17D03A3b"; // 将实际的合约部署地址替换为这个占位符

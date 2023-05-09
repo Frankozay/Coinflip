@@ -3,9 +3,21 @@ import { ethers } from "ethers";
 import { useUserStore } from "@/store/UserStore";
 import { getSigner } from "@/utils/ConnectWallet";
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  searchValue: string;
+  onSearchValueChange: (value: string) => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({
+  searchValue,
+  onSearchValueChange,
+}) => {
   const username = useUserStore(state => state.username);
   const [balance, setBalance] = useState<string | null>(null);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onSearchValueChange(event.target.value);
+  };
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -39,6 +51,8 @@ const Navbar: React.FC = () => {
               className="rounded-l-md p-2"
               type="text"
               placeholder="搜索房间"
+              value={searchValue}
+              onChange={handleSearchChange}
             />
             <button className="bg-blue-300 text-white px-4 py-2 rounded-r-md">
               搜索
